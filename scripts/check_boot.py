@@ -51,6 +51,13 @@ def qmp_hmp(sock, line):
     return r.get("return", "")
 
 
+def preview(text, rows=8):
+    if not text:
+        return "(ecran vide)"
+    lines = [text[i * 80:(i + 1) * 80].rstrip() for i in range(min(rows, 25))]
+    return "\n".join(lines)
+
+
 def dump_vga(sock):
     raw = qmp_hmp(sock, "xp /%dxb 0x%x" % (VGA_BYTES, VGA_PHYS))
     vals = [int(m.group(1), 16) for m in re.finditer(r"0x([0-9a-fA-F]{1,2})", raw)]
@@ -133,9 +140,10 @@ def main():
     ap.add_argument("--expect", default="42")
     args = ap.parse_args()
 
-    qemu = shutil.which("qemu-system-i386")
+    qemu = shutil.which("qemu-system-i386") or shutil.which("qemu-system-x86_64")
     if not qemu:
-        die("qemu-system-i386 introuvable (brew/apt: qemu)")
+        die("QEMU introuvable (Ubuntu: apt install qemu-system-x86)")
+    print("ok: QEMU " + qemu)
     if not os.path.isfile(args.bin) or os.path.getsize(args.bin) == 0:
         die("binaire manquant: " + args.bin)
     if not os.path.isfile(args.iso) or os.path.getsize(args.iso) == 0:
