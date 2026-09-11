@@ -14,7 +14,8 @@ Le dossier `bonus/` reprend le meme kernel avec scroll, curseur, couleurs,
 ```bash
 make        # compile kfs.bin
 make iso    # installe GRUB sur kfs.iso
-make run    # QEMU + menu GRUB
+make run    # QEMU graphique + menu GRUB (test manuel)
+make test   # boot auto QEMU, verifie 42 a l'ecran (sans fenetre)
 make fclean
 ```
 
@@ -42,6 +43,33 @@ Sequence au `make run` :
 
 Dependances Linux 42 : `gcc` (-m32), `nasm`, `ld`, `grub-mkrescue`, `qemu-system-i386`.
 Sur macOS : `i686-elf-gcc`, `i686-elf-ld`, `i686-elf-grub-mkrescue` (detectes par le Makefile).
+`make test` a besoin de QEMU et de Python 3.
+
+## CI (GitHub Actions)
+
+Fichier : `.github/workflows/ci.yml`.
+
+A chaque **push** et **pull request**, GitHub lance une VM **Ubuntu 24.04** (pas ton Mac).
+Il n'y a pas d'ecran : on ne peut pas ouvrir la fenetre de `make run`.
+
+Le job **Build and test** :
+
+1. Installe gcc 32-bit, nasm, make, GRUB (`grub-pc-bin`), xorriso, python3
+2. Installe **QEMU** (`qemu-system-x86`) — sans ca le test de boot echoue
+3. `make test` — partie mandatory
+4. `make -C bonus test` — bonus
+
+`make test` lance `scripts/check_boot.py` :
+
+1. Compile le kernel et construit `kfs.iso` (comme `make iso`)
+2. Verifie le header **Multiboot** si `grub-file` est la
+3. QEMU **sans fenetre** (`-display none`) :
+   - boot direct `-kernel kfs.bin`
+   - boot ISO + menu GRUB + Entree (comme `make run`)
+4. Lit le tampon VGA `0xB8000` (le meme ecran 80x25 que la fenetre QEMU)
+5. Le texte **`42`** doit y etre, sinon exit code != 0
+
+`make run` ne change pas : QEMU graphique, menu GRUB a la main.
 
 ## Fichiers
 
@@ -54,7 +82,9 @@ Sur macOS : `i686-elf-gcc`, `i686-elf-ld`, `i686-elf-grub-mkrescue` (detectes pa
 | `include/` | Types kernel, prototypes VGA / klib |
 | `linker.ld` | Script linker perso (chargement a 1 MiB) |
 | `iso/boot/grub/grub.cfg` | Menu GRUB |
-| `Makefile` | Compile ASM+C, link, ISO |
+| `Makefile` | Compile ASM+C, link, ISO, `test` |
+| `scripts/check_boot.py` | Boot QEMU headless, check VGA `42` |
+| `.github/workflows/ci.yml` | CI Ubuntu : deps + `make test` |
 
 ## Flags (sujet III.2.2)
 

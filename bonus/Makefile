@@ -6,12 +6,10 @@ AS	= nasm
 LD	= ld
 GRUB	= grub-mkrescue
 
-CFLAGS	= -fno-builtin -fno-exceptions -fno-stack-protector \
+CFLAGS	= -fno-builtin -fno-exceptions -fno-stack-protector -fno-rtti \
 	-nostdlib -nodefaultlibs -ffreestanding -fno-pie -fno-pic -I include
 ASFLAGS	= -f elf32
 LDFLAGS	= -m elf_i386 -nostdlib -T linker.ld
-GRUBFLAGS	= --compress=xz --fonts= --locales= --themes= \
-	--install-modules="multiboot biosdisk iso9660 normal configfile reboot halt"
 
 ifeq ($(shell uname), Darwin)
 CC	= i686-elf-gcc
@@ -19,7 +17,7 @@ LD	= i686-elf-ld
 GRUB	= i686-elf-grub-mkrescue
 else
 CFLAGS	+= -m32
-GRUBFLAGS	+= -d $(dir $(shell find /usr/lib64/grub /usr/lib/grub -name boot_hybrid.img 2>/dev/null | head -1))
+GRUBFLAGS = -d /usr/lib/grub/i386-pc
 endif
 
 SRCS	= $(wildcard src/*.c)
@@ -40,14 +38,17 @@ $(NAME): $(OBJS) linker.ld
 	$(AS) $(ASFLAGS) $< -o $@
 
 iso: $(NAME)
+	mkdir -p iso/boot/grub
 	cp $(NAME) iso/boot/kfs.bin
-	$(GRUB) $(GRUBFLAGS) -o $(ISO) iso
+	$(GRUB) $(GRUBFLAGS) --compress=xz --fonts= --locales= --themes= \
+	--install-modules="multiboot biosdisk iso9660 normal configfile reboot halt" \
+	-o $(ISO) iso
 
 run: iso
 	qemu-system-i386 -boot d -cdrom $(ISO)
 
 test: iso
-	python3 scripts/check_boot.py --bin $(NAME) --iso $(ISO)
+	python3 ../scripts/check_boot.py --bin $(NAME) --iso $(ISO)
 
 clean:
 	rm -f $(OBJS)
