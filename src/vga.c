@@ -16,6 +16,22 @@ static uint16_t vga_entry(char c, uint8_t color)
     return ((uint16_t)(unsigned char)c | ((uint16_t)color << 8));
 }
 
+static void outb(uint16_t port, uint8_t value)
+{
+    __asm__ volatile ("outb %0, %1" : : "a"(value), "Nd"(port));
+}
+
+static void vga_update_cursor(void)
+{
+    uint16_t    position;
+
+    position = g_row * VGA_WIDTH + g_col;
+    outb(0x3D4, 0x0F);
+    outb(0x3D5, position & 0xFF);
+    outb(0x3D4, 0x0E);
+    outb(0x3D5, position >> 8);
+}
+
 void    vga_clear(void)
 {
     size_t  i;
@@ -28,6 +44,7 @@ void    vga_clear(void)
     }
     g_row = 0;
     g_col = 0;
+    vga_update_cursor();
 }
 
 void    vga_init(void)
@@ -47,22 +64,22 @@ void    vga_putchar(char c)
         g_col = 0;
         if (g_row + 1 < VGA_HEIGHT)
             g_row++;
-        return ;
     }
-    if (c == '\r')
-    {
+    else if (c == '\r')
         g_col = 0;
-        return ;
-    }
-    index = g_row * VGA_WIDTH + g_col;
-    g_vga[index] = vga_entry(c, g_color);
-    g_col++;
-    if (g_col >= VGA_WIDTH)
+    else
     {
-        g_col = 0;
-        if (g_row + 1 < VGA_HEIGHT)
-            g_row++;
+        index = g_row * VGA_WIDTH + g_col;
+        g_vga[index] = vga_entry(c, g_color);
+        g_col++;
+        if (g_col >= VGA_WIDTH)
+        {
+            g_col = 0;
+            if (g_row + 1 < VGA_HEIGHT)
+                g_row++;
+        }
     }
+    vga_update_cursor();
 }
 
 void    vga_write(const char *s)
