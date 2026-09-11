@@ -23,7 +23,7 @@ SRCS	= $(wildcard src/*.c)
 ASMS	= $(wildcard src/*.s)
 OBJS	= $(SRCS:.c=.o) $(ASMS:.s=.o)
 
-.PHONY: all iso run clean fclean re
+.PHONY: all iso run test clean fclean re
 
 all: $(NAME)
 
@@ -45,6 +45,14 @@ iso: $(NAME)
 
 run: iso
 	qemu-system-i386 -boot d -cdrom $(ISO)
+
+test: iso
+ifeq ($(shell uname), Darwin)
+	test -s $(NAME) && test -s $(ISO)
+else
+	grub-file --is-x86-multiboot $(NAME)
+	test -s $(ISO)
+endif
 
 clean:
 	rm -f $(OBJS)
