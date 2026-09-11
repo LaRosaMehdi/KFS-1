@@ -17,6 +17,7 @@ LD	= i686-elf-ld
 GRUB	= i686-elf-grub-mkrescue
 else
 CFLAGS	+= -m32
+GRUBFLAGS = -d /usr/lib/grub/i386-pc
 endif
 
 SRCS	= $(wildcard src/*.c)
@@ -39,7 +40,7 @@ $(NAME): $(OBJS) linker.ld
 iso: $(NAME)
 	mkdir -p iso/boot/grub
 	cp $(NAME) iso/boot/kfs.bin
-	$(GRUB) --compress=xz --fonts= --locales= --themes= \
+	$(GRUB) $(GRUBFLAGS) --compress=xz --fonts= --locales= --themes= \
 	--install-modules="multiboot biosdisk iso9660 normal configfile reboot halt" \
 	-o $(ISO) iso
 
