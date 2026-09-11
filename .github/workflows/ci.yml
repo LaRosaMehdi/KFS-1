@@ -31,4 +31,4 @@ jobs:
         run: make test
 
       - name: Build and test bonus
-        run: make -C bonus test
+        run: make BONUS=1 test

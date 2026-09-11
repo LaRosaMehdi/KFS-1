@@ -35,11 +35,7 @@ SRCS	:= $(wildcard bonus/src/*.c bonus/src/*.s) \
 endif
 OBJS	= $(addprefix $(BUILD)/,$(addsuffix .o,$(basename $(SRCS))))
 
-<<<<<<< HEAD
-.PHONY: all bonus iso run run-bonus clean fclean re
-=======
-.PHONY: all iso run test clean fclean re
->>>>>>> 59f966b (Feat : Ci environement Test Make)
+.PHONY: all bonus iso run run-bonus test clean fclean re
 
 all: $(NAME)
 
@@ -68,12 +64,7 @@ run: iso
 	qemu-system-i386 -boot d -cdrom $(ISO)
 
 test: iso
-ifeq ($(shell uname), Darwin)
-	test -s $(NAME) && test -s $(ISO)
-else
-	grub-file --is-x86-multiboot $(NAME)
-	test -s $(ISO)
-endif
+	python3 scripts/check_boot.py --bin $(NAME) --iso $(ISO)
 
 clean:
 	rm -rf build

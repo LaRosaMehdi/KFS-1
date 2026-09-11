@@ -18,6 +18,7 @@ script, klib, GRUB) is shared.
 make        # build kfs.bin
 make iso    # install GRUB into kfs.iso
 make run    # QEMU + GRUB menu
+make test   # headless QEMU, checks that 42 is on screen
 make fclean
 ```
 
@@ -26,6 +27,7 @@ Bonus (`kfs_bonus.bin` / `kfs_bonus.iso`):
 ```bash
 make bonus          # build kfs_bonus.bin
 make run-bonus      # QEMU on kfs_bonus.iso
+make BONUS=1 test   # headless check of the bonus ISO
 ```
 
 What happens on `make run`:
@@ -40,6 +42,26 @@ What happens on `make run`:
 
 Linux (42) dependencies: `gcc` (-m32), `nasm`, `ld`, `grub-mkrescue`, `qemu-system-i386`.
 On macOS: `i686-elf-gcc`, `i686-elf-ld`, `i686-elf-grub-mkrescue` (detected by the Makefile).
+`make test` also needs QEMU and Python 3.
+
+## CI (GitHub Actions)
+
+Workflow: `.github/workflows/ci.yml`.
+
+On every push and pull request, GitHub runs an Ubuntu 24.04 VM. There is no
+display, so `make run` cannot open a window.
+
+The **Build and test** job:
+
+1. Installs 32-bit gcc, nasm, make, GRUB (`grub-pc-bin`), xorriso, Python 3
+2. Installs QEMU (`qemu-system-x86`)
+3. `make test` for the mandatory kernel
+4. `make BONUS=1 test` for the bonus
+
+`make test` runs `scripts/check_boot.py`. It builds the ISO, boots QEMU with
+`-display none` (direct `-kernel` boot, then the ISO through the GRUB menu),
+reads the VGA buffer at `0xB8000`, and fails if **42** is not on screen.
+`make run` stays the graphical QEMU session.
 
 ## Files
 
@@ -53,6 +75,8 @@ On macOS: `i686-elf-gcc`, `i686-elf-ld`, `i686-elf-grub-mkrescue` (detected by t
 | `linker.ld` | Custom linker script (loaded at 1 MiB) |
 | `iso/boot/grub/grub.cfg` | GRUB menu |
 | `Makefile` | Builds ASM+C, links, makes the ISO (`make` or `make bonus`) |
+| `scripts/check_boot.py` | Headless QEMU boot, checks VGA for `42` |
+| `.github/workflows/ci.yml` | Ubuntu CI: dependencies + `make test` |
 
 Bonus (`bonus/`, replaces or extends the files above):
 
