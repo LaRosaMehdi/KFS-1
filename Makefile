@@ -47,12 +47,7 @@ run: iso
 	qemu-system-i386 -boot d -cdrom $(ISO)
 
 test: iso
-ifeq ($(shell uname), Darwin)
-	test -s $(NAME) && test -s $(ISO)
-else
-	grub-file --is-x86-multiboot $(NAME)
-	test -s $(ISO)
-endif
+	python3 scripts/check_boot.py --bin $(NAME) --iso $(ISO)
 
 clean:
 	rm -f $(OBJS)
