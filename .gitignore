@@ -1,0 +1,9 @@
+*.o
+*.ppm
+.DS_Store
+iso/boot/kfs.bin
+bonus/iso/boot/kfs.bin
+kfs.bin
+kfs.iso
+bonus/kfs.bin
+bonus/kfs.iso
