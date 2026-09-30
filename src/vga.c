@@ -1,5 +1,6 @@
 #include "vga.h"
 #include "klib.h"
+#include "io.h"
 
 static uint16_t *const  g_vga = (uint16_t *)VGA_MEMORY;
 static size_t           g_row;
@@ -14,11 +15,6 @@ static uint8_t  vga_entry_color(uint8_t fg, uint8_t bg)
 static uint16_t vga_entry(char c, uint8_t color)
 {
     return ((uint16_t)(unsigned char)c | ((uint16_t)color << 8));
-}
-
-static void outb(uint16_t port, uint8_t value)
-{
-    __asm__ volatile ("outb %0, %1" : : "a"(value), "Nd"(port));
 }
 
 static void vga_update_cursor(void)
