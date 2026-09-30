@@ -19,6 +19,7 @@ static void setup_tty(size_t n)
         printk("42\n");
         tty_set_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
     }
+    tty_lock_lines();
 }
 
 void main(uint32_t magic, void *mb_info)

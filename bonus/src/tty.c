@@ -8,6 +8,7 @@
 struct tty
 {
     uint16_t buffer[VGA_SIZE];
+    size_t top;
     size_t row;
     size_t col;
     uint8_t color;
@@ -56,8 +57,8 @@ static void tty_scroll(struct tty *t)
 {
     size_t col;
 
-    memmove(t->buffer + TTY_TOP * VGA_WIDTH, t->buffer + (TTY_TOP + 1) * VGA_WIDTH,
-        (VGA_HEIGHT - TTY_TOP - 1) * VGA_WIDTH * sizeof(uint16_t));
+    memmove(t->buffer + t->top * VGA_WIDTH, t->buffer + (t->top + 1) * VGA_WIDTH,
+        (VGA_HEIGHT - t->top - 1) * VGA_WIDTH * sizeof(uint16_t));
     col = 0;
     while (col < VGA_WIDTH)
     {
@@ -89,6 +90,7 @@ void tty_init(void)
     i = 0;
     while (i < TTY_COUNT)
     {
+        g_ttys[i].top = TTY_TOP;
         g_ttys[i].row = TTY_TOP;
         g_ttys[i].col = 0;
         g_ttys[i].color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
@@ -113,6 +115,17 @@ void tty_switch(size_t index)
     tty_sync();
 }
 
+void tty_lock_lines(void)
+{
+    struct tty *t;
+
+    t = &g_ttys[g_current];
+    if (t->col != 0)
+        tty_putchar('\n');
+    if (t->row < VGA_HEIGHT - 1)
+        t->top = t->row;
+}
+
 void tty_set_color(uint8_t fg, uint8_t bg)
 {
     g_ttys[g_current].color = vga_entry_color(fg, bg);
@@ -125,7 +138,7 @@ void tty_backspace(void)
     t = &g_ttys[g_current];
     if (t->col == 0)
     {
-        if (t->row == TTY_TOP)
+        if (t->row == t->top)
             return ;
         t->row--;
         t->col = VGA_WIDTH - 1;

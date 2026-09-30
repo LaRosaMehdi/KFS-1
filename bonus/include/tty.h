@@ -12,5 +12,6 @@ void tty_set_color(uint8_t fg, uint8_t bg);
 void tty_putchar(char c);
 void tty_write(const char *s);
 void tty_backspace(void);
+void tty_lock_lines(void);
 
 #endif
