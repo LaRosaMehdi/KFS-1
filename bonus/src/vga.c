@@ -30,7 +30,7 @@ void vga_cursor_move(size_t row, size_t col)
 {
     uint16_t pos;
 
-    pos = (uint16_t)(col * VGA_WIDTH + row);
+    pos = (uint16_t)(row * VGA_WIDTH + col);
     outb(0x3D4, 0x0F);
     outb(0x3D5, (uint8_t)(pos & 0xFF));
     outb(0x3D4, 0x0E);
