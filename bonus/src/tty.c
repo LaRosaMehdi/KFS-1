@@ -22,8 +22,16 @@ static void tty_sync(void)
 
 static void tty_scroll(struct tty *t)
 {
+    size_t col;
+
     memmove(t->buffer, t->buffer + VGA_WIDTH,
         (VGA_HEIGHT - 1) * VGA_WIDTH * sizeof(uint16_t));
+    col = 0;
+    while (col < VGA_WIDTH)
+    {
+        t->buffer[(VGA_HEIGHT - 1) * VGA_WIDTH + col] = vga_entry(' ', t->color);
+        col++;
+    }
     t->row = VGA_HEIGHT - 1;
     t->col = 0;
 }
