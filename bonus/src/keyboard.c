@@ -57,7 +57,7 @@ void keyboard_handler(void)
         return ;
     if (sc >= KBD_F1 && sc <= KBD_F4)
     {
-        tty_switch((size_t)(sc - KBD_F1 + 1));
+        tty_switch((size_t)(sc - KBD_F1));
         return ;
     }
     c = g_shift ? g_map_shift[sc] : g_map[sc];
