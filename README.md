@@ -6,8 +6,10 @@ qui affiche **42** en VGA texte (80x25, memoire `0xB8000`).
 
 Aucune libc hote n'est liee. Image virtuelle : `kfs.iso` (bien sous 10 Mo).
 
-Le dossier `bonus/` reprend le meme kernel avec scroll, curseur, couleurs,
-`printk`, clavier et 4 ecrans (F1-F4).
+Le bonus ajoute scroll, curseur, couleurs, `printk`, clavier et 4 ecrans (F1-F4).
+`bonus/` ne contient que les fichiers ajoutes ou remplaces : un fichier de
+`bonus/src/` remplace celui de meme nom dans `src/`, `bonus/include/` passe
+avant `include/`. Le reste (boot, linker, klib, GRUB) est partage.
 
 ## Lancer
 
@@ -18,16 +20,11 @@ make run    # QEMU + menu GRUB
 make fclean
 ```
 
-Bonus, **depuis la racine** `KFS-1/` :
+Bonus (`kfs_bonus.bin` / `kfs_bonus.iso`) :
 
 ```bash
-make -C bonus run
-```
-
-Bonus, **si tu es deja dans** `bonus/` :
-
-```bash
-make run
+make bonus          # compile kfs_bonus.bin
+make run BONUS=1    # QEMU sur kfs_bonus.iso
 ```
 
 Sequence au `make run` :
