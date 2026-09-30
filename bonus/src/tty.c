@@ -3,6 +3,8 @@
 #include "tty.h"
 #include "klib.h"
 
+# define TTY_TOP 1
+
 struct tty
 {
     uint16_t buffer[VGA_SIZE];
@@ -14,9 +16,39 @@ struct tty
 static struct tty g_ttys[TTY_COUNT];
 static size_t g_current;
 
+static void tty_draw_tabs(void)
+{
+    uint16_t *screen;
+    uint8_t tab_color;
+    size_t tty_index;
+    size_t col;
+
+    screen = vga_buffer();
+    col = 0;
+    while (col < VGA_WIDTH)
+    {
+        screen[col] = vga_entry(' ', vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLUE));
+        col++;
+    }
+    tty_index = 0;
+    while (tty_index < TTY_COUNT)
+    {
+        if (tty_index == g_current)
+            tab_color = vga_entry_color(VGA_COLOR_BLACK, VGA_COLOR_LIGHT_CYAN);
+        else
+            tab_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLUE);
+        col = tty_index * 3;
+        screen[col] = vga_entry(' ', tab_color);
+        screen[col + 1] = vga_entry((char)('1' + tty_index), tab_color);
+        screen[col + 2] = vga_entry(' ', tab_color);
+        tty_index++;
+    }
+}
+
 static void tty_sync(void)
 {
     memcpy(vga_buffer(), g_ttys[g_current].buffer, VGA_SIZE * sizeof(uint16_t));
+    tty_draw_tabs();
     vga_cursor_move(g_ttys[g_current].row, g_ttys[g_current].col);
 }
 
@@ -24,8 +56,8 @@ static void tty_scroll(struct tty *t)
 {
     size_t col;
 
-    memmove(t->buffer, t->buffer + VGA_WIDTH,
-        (VGA_HEIGHT - 1) * VGA_WIDTH * sizeof(uint16_t));
+    memmove(t->buffer + TTY_TOP * VGA_WIDTH, t->buffer + (TTY_TOP + 1) * VGA_WIDTH,
+        (VGA_HEIGHT - TTY_TOP - 1) * VGA_WIDTH * sizeof(uint16_t));
     col = 0;
     while (col < VGA_WIDTH)
     {
@@ -57,7 +89,7 @@ void tty_init(void)
     i = 0;
     while (i < TTY_COUNT)
     {
-        g_ttys[i].row = 0;
+        g_ttys[i].row = TTY_TOP;
         g_ttys[i].col = 0;
         g_ttys[i].color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
         j = 0;
@@ -93,7 +125,7 @@ void tty_backspace(void)
     t = &g_ttys[g_current];
     if (t->col == 0)
     {
-        if (t->row == 0)
+        if (t->row == TTY_TOP)
             return ;
         t->row--;
         t->col = VGA_WIDTH - 1;
