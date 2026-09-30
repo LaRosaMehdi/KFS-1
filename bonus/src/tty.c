@@ -70,6 +70,7 @@ void tty_switch(size_t index)
     if (index >= TTY_COUNT || index == g_current)
         return ;
     g_current = index;
+    tty_sync();
 }
 
 void tty_set_color(uint8_t fg, uint8_t bg)
