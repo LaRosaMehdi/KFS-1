@@ -63,8 +63,8 @@ Bonus (`bonus/`, replaces or extends the files above):
 | `src/idt.c` | IDT: 32 exceptions (red message + halt), 16 IRQs |
 | `src/cpu.s` | `lgdt`/`lidt`, interrupt stubs that call into C |
 | `src/pic.c` | 8259 PIC: IRQs remapped to 32-47, only the keyboard gets through |
-| `src/keyboard.c` | PS/2 scancodes → characters, Shift, F1-F4 |
-| `src/tty.c` | 4 consoles, tab bar, scrolling, protected lines |
+| `src/keyboard.c` | PS/2 scancodes → characters, Shift, F1-F4, arrows, PageUp/PageDown |
+| `src/tty.c` | 4 consoles, tab bar, scrolling + history, cursor movement, protected lines |
 | `src/printk.c` | `printk`: `%c %s %d %i %u %x %X %p %%` |
 | `src/vga.c` | VGA cells and hardware cursor |
 | `include/` | Prototypes, GDT/IDT structures, bonus `vga.h` |
@@ -84,6 +84,10 @@ Writes go to the active console's copy, which is then copied into VGA memory.
 Row 0 shows the tabs ` 1  2  3  4 `, with the active console highlighted.
 Each console's header is protected (`tty_lock_lines`): neither backspace nor
 scrolling can erase it.
+Rows that scroll off the top go to a 100-row history per console:
+PageUp/PageDown scroll the view through it, and typing jumps back to the live
+screen. The arrow keys move the cursor inside the editable area, and the next
+characters are written there.
 
 **Keyboard (bonus)**: a key press raises IRQ1 → the PIC sends vector 33 → the
 `irq1` stub (`cpu.s`) saves the registers → `irq_handler` → `keyboard_handler`

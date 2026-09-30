@@ -27,5 +27,11 @@ void tty_write(const char *s);
 void tty_backspace(void);
 /* Protects the lines written so far: they can't be erased or scrolled away. */
 void tty_lock_lines(void);
+/* Moves the cursor by `row_delta` rows and `col_delta` columns, staying
+** inside the editable area. The next characters are written there. */
+void tty_move_cursor(int row_delta, int col_delta);
+/* Scrolls the view `rows` rows back into the history (negative = forward).
+** Writing anything jumps back to the live screen. */
+void tty_scroll_view(int rows);
 
 #endif

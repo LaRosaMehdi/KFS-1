@@ -7,7 +7,8 @@
 #include "tty.h"
 #include "klib.h"
 
-# define TTY_TOP 1   /* first text row: row 0 is the tab bar */
+# define TTY_TOP 1       /* first text row: row 0 is the tab bar */
+# define TTY_HISTORY 100  /* rows kept after scrolling off the screen */
 
 struct tty
 {
@@ -16,6 +17,9 @@ struct tty
     size_t row;                 /* cursor position */
     size_t col;
     uint8_t color;              /* color of the next characters */
+    uint16_t history[TTY_HISTORY * VGA_WIDTH];  /* scrolled-off rows, oldest first */
+    size_t history_rows;
+    size_t scroll_back;         /* rows the view is scrolled up, 0 = live */
 };
 
 static struct tty g_ttys[TTY_COUNT];
@@ -51,18 +55,52 @@ static void tty_draw_tabs(void)
     }
 }
 
-/* Shows the active console on screen. */
+/* Shows the active console on screen. When scrolled back, the rows below
+** `top` show history first, then the start of the live buffer. */
 static void tty_sync(void)
 {
-    memcpy(vga_buffer(), g_ttys[g_current].buffer, VGA_SIZE * sizeof(uint16_t));
+    struct tty *t;
+    uint16_t *screen;
+    size_t screen_row;
+    size_t line;
+
+    t = &g_ttys[g_current];
+    screen = vga_buffer();
+    memcpy(screen, t->buffer, t->top * VGA_WIDTH * sizeof(uint16_t));
+    screen_row = t->top;
+    while (screen_row < VGA_HEIGHT)
+    {
+        line = t->history_rows - t->scroll_back + (screen_row - t->top);
+        if (line < t->history_rows)
+            memcpy(screen + screen_row * VGA_WIDTH, t->history + line * VGA_WIDTH,
+                VGA_WIDTH * sizeof(uint16_t));
+        else
+            memcpy(screen + screen_row * VGA_WIDTH,
+                t->buffer + (t->top + line - t->history_rows) * VGA_WIDTH,
+                VGA_WIDTH * sizeof(uint16_t));
+        screen_row++;
+    }
     tty_draw_tabs();
-    vga_cursor_move(g_ttys[g_current].row, g_ttys[g_current].col);
+    /* Pushed below the screen when scrolled back: the VGA hides it. */
+    vga_cursor_move(t->row + t->scroll_back, t->col);
 }
 
-/* Moves everything below `top` up one row and clears the last row. */
+/* Moves everything below `top` up one row and clears the last row.
+** The row pushed out goes to the history. */
 static void tty_scroll(struct tty *t)
 {
     size_t col;
+
+    /* Shifts the whole history per scroll: a ring buffer would avoid it. */
+    if (t->history_rows == TTY_HISTORY)
+    {
+        memmove(t->history, t->history + VGA_WIDTH,
+            (TTY_HISTORY - 1) * VGA_WIDTH * sizeof(uint16_t));
+        t->history_rows--;
+    }
+    memcpy(t->history + t->history_rows * VGA_WIDTH, t->buffer + t->top * VGA_WIDTH,
+        VGA_WIDTH * sizeof(uint16_t));
+    t->history_rows++;
 
     memmove(t->buffer + t->top * VGA_WIDTH, t->buffer + (t->top + 1) * VGA_WIDTH,
         (VGA_HEIGHT - t->top - 1) * VGA_WIDTH * sizeof(uint16_t));
@@ -102,6 +140,8 @@ void tty_init(void)
         g_ttys[i].row = TTY_TOP;
         g_ttys[i].col = 0;
         g_ttys[i].color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
+        g_ttys[i].history_rows = 0;
+        g_ttys[i].scroll_back = 0;
         j = 0;
         while (j < VGA_SIZE)
         {
@@ -163,6 +203,7 @@ void tty_putchar(char c)
     size_t pad;
 
     t = &g_ttys[g_current];
+    t->scroll_back = 0;
     if (c == '\n')
     {
         t->col = 0;
@@ -197,4 +238,37 @@ void tty_write(const char *s)
         tty_putchar(s[i]);
         i++;
     }
+}
+
+void tty_move_cursor(int row_delta, int col_delta)
+{
+    struct tty *t;
+    int new_row;
+    int new_col;
+
+    t = &g_ttys[g_current];
+    new_row = (int)t->row + row_delta;
+    new_col = (int)t->col + col_delta;
+    if (new_row < (int)t->top || new_row >= VGA_HEIGHT
+        || new_col < 0 || new_col >= VGA_WIDTH)
+        return ;
+    t->row = (size_t)new_row;
+    t->col = (size_t)new_col;
+    t->scroll_back = 0;
+    tty_sync();
+}
+
+void tty_scroll_view(int rows)
+{
+    struct tty *t;
+    int new_scroll_back;
+
+    t = &g_ttys[g_current];
+    new_scroll_back = (int)t->scroll_back + rows;
+    if (new_scroll_back < 0)
+        new_scroll_back = 0;
+    if (new_scroll_back > (int)t->history_rows)
+        new_scroll_back = (int)t->history_rows;
+    t->scroll_back = (size_t)new_scroll_back;
+    tty_sync();
 }
