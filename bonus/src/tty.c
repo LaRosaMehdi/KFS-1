@@ -100,6 +100,7 @@ void tty_backspace(void)
     }
     else
         t->col--;
+    t->buffer[t->row * VGA_WIDTH + t->col] = vga_entry(' ', t->color);
 }
 
 void tty_putchar(char c)
