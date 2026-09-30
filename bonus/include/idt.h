@@ -46,6 +46,7 @@ struct registers
 };
 
 void idt_init(void);
+void isr_handler(struct registers *regs);
 void irq_handler(struct registers *regs);
 
 #endif
