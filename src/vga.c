@@ -1,7 +1,10 @@
+/* Direct writes to VGA text memory + hardware cursor. */
+
 #include "vga.h"
 #include "klib.h"
 #include "io.h"
 
+/* Software cursor position and current color. */
 static uint16_t *const  g_vga = (uint16_t *)VGA_MEMORY;
 static size_t           g_row;
 static size_t           g_col;
@@ -17,6 +20,8 @@ static uint16_t vga_entry(char c, uint8_t color)
     return ((uint16_t)(unsigned char)c | ((uint16_t)color << 8));
 }
 
+/* Moves the hardware cursor: CRT registers 0x0F (position low byte) and
+** 0x0E (high byte), selected through port 0x3D4, written through 0x3D5. */
 static void vga_update_cursor(void)
 {
     uint16_t    position;
