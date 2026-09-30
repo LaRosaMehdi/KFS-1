@@ -12,7 +12,7 @@ static void setup_tty(size_t n)
 {
     tty_switch(n);
     tty_set_color(VGA_COLOR_LIGHT_CYAN, VGA_COLOR_BLACK);
-    printk("tty %u    F1-F4 pour changer d'ecran\n", (unsigned)(n + 1));
+    printk("tty %u    F1-F4 to switch screens\n", (unsigned)(n + 1));
     if (n == 0)
     {
         tty_set_color(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK);
