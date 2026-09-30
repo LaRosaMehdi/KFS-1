@@ -35,12 +35,15 @@ SRCS	:= $(wildcard bonus/src/*.c bonus/src/*.s) \
 endif
 OBJS	= $(addprefix $(BUILD)/,$(addsuffix .o,$(basename $(SRCS))))
 
-.PHONY: all bonus iso run clean fclean re
+.PHONY: all bonus iso run run-bonus clean fclean re
 
 all: $(NAME)
 
 bonus:
 	$(MAKE) BONUS=1
+
+run-bonus:
+	$(MAKE) BONUS=1 run
 
 $(NAME): $(OBJS) linker.ld
 	$(LD) $(LDFLAGS) -o $@ $(OBJS)

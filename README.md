@@ -24,7 +24,7 @@ Bonus (`kfs_bonus.bin` / `kfs_bonus.iso`) :
 
 ```bash
 make bonus          # compile kfs_bonus.bin
-make run BONUS=1    # QEMU sur kfs_bonus.iso
+make run-bonus      # QEMU sur kfs_bonus.iso
 ```
 
 Sequence au `make run` :
