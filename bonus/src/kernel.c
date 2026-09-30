@@ -17,8 +17,8 @@ static void setup_tty(size_t n)
     {
         tty_set_color(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK);
         printk("42\n");
-        tty_set_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
     }
+    tty_set_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
     tty_lock_lines();
 }
 
