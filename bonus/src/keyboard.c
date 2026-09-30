@@ -1,17 +1,21 @@
-/* PS/2 : Shift, F1-F4, le reste va sur le TTY. */
+/*
+** PS/2 keyboard: Shift, F1-F4 (switch console), everything else goes to the TTY.
+** Scancode < 0x80 = key pressed, scancode | 0x80 = key released.
+*/
 
 #include "keyboard.h"
 #include "io.h"
 #include "tty.h"
 
-# define KBD_DATA    0x60
-# define KBD_STATUS  0x64
+# define KBD_DATA    0x60    /* port to read scancodes from */
+# define KBD_STATUS  0x64    /* bit 0 = a byte is waiting on KBD_DATA */
 # define KBD_LSHIFT  0x2A
 # define KBD_RSHIFT  0x36
 # define KBD_F1      0x3B
 # define KBD_F4      0x3E
 # define KBD_RELEASE 0x80
 
+/* Scancode -> character (0 = ignored key), without then with Shift. */
 static const char g_map[128] = {
     0, 27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b',
     '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',
@@ -28,7 +32,7 @@ static const char g_map_shift[128] = {
     '*', 0, ' ', 0
 };
 
-static int g_shift;
+static int g_shift;     /* 1 while a Shift key is held */
 
 void keyboard_init(void)
 {

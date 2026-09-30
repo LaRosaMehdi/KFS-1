@@ -1,4 +1,8 @@
-/* Init GDT/IDT/PIC/TTY/clavier, puis 4 consoles. */
+/*
+** Bonus C entry point, called by _start (src/boot.s).
+** Sets up GDT/IDT/PIC/TTY/keyboard, then the 4 consoles, then waits for keys:
+** everything else happens in keyboard interrupts.
+*/
 
 #include "types.h"
 #include "gdt.h"
@@ -8,6 +12,7 @@
 #include "tty.h"
 #include "printk.h"
 
+/* Writes the protected header of console `n` (plus "42" on the first one). */
 static void setup_tty(size_t n)
 {
     tty_switch(n);
@@ -40,6 +45,7 @@ void main(uint32_t magic, void *mb_info)
         i++;
     }
     tty_switch(0);
+    /* Tables are ready: interrupts can be enabled. */
     __asm__ volatile ("sti");
     while (1)
         __asm__ volatile ("hlt");

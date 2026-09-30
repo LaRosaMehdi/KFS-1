@@ -1,22 +1,27 @@
-/* Quatre buffers TTY, scroll, couleurs, curseur. */
+/*
+** Virtual consoles. Each console keeps a full copy of the screen (`buffer`);
+** writes go there, then tty_sync copies the active console into VGA memory,
+** draws the tab bar and moves the cursor.
+*/
 
 #include "tty.h"
 #include "klib.h"
 
-# define TTY_TOP 1
+# define TTY_TOP 1   /* first text row: row 0 is the tab bar */
 
 struct tty
 {
-    uint16_t buffer[VGA_SIZE];
-    size_t top;
-    size_t row;
+    uint16_t buffer[VGA_SIZE];  /* screen contents of this console */
+    size_t top;                 /* first editable row (protected rows above) */
+    size_t row;                 /* cursor position */
     size_t col;
-    uint8_t color;
+    uint8_t color;              /* color of the next characters */
 };
 
 static struct tty g_ttys[TTY_COUNT];
 static size_t g_current;
 
+/* Row 0: " 1  2  3  4 " on blue, active console in black on cyan. */
 static void tty_draw_tabs(void)
 {
     uint16_t *screen;
@@ -46,6 +51,7 @@ static void tty_draw_tabs(void)
     }
 }
 
+/* Shows the active console on screen. */
 static void tty_sync(void)
 {
     memcpy(vga_buffer(), g_ttys[g_current].buffer, VGA_SIZE * sizeof(uint16_t));
@@ -53,6 +59,7 @@ static void tty_sync(void)
     vga_cursor_move(g_ttys[g_current].row, g_ttys[g_current].col);
 }
 
+/* Moves everything below `top` up one row and clears the last row. */
 static void tty_scroll(struct tty *t)
 {
     size_t col;
@@ -69,6 +76,7 @@ static void tty_scroll(struct tty *t)
     t->col = 0;
 }
 
+/* Writes a printable character, wrapping at the end of the row. */
 static void tty_putc(struct tty *t, char c)
 {
     if (t->col >= VGA_WIDTH)
@@ -122,6 +130,7 @@ void tty_lock_lines(void)
     t = &g_ttys[g_current];
     if (t->col != 0)
         tty_putchar('\n');
+    /* Always keep at least one editable row. */
     if (t->row < VGA_HEIGHT - 1)
         t->top = t->row;
 }

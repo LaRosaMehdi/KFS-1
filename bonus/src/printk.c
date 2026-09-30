@@ -1,4 +1,8 @@
-/* printk : %c %s %d %i %u %x %X %p %% */
+/*
+** printk: %c %s %d %i %u %x %X %p %%
+** Variadic arguments go through gcc builtins (__builtin_va_*), since
+** <stdarg.h> is not available without libc.
+*/
 
 #include "printk.h"
 #include "tty.h"
@@ -11,6 +15,7 @@ static void print_str(const char *s)
     tty_write(s);
 }
 
+/* Writes `n` in base `base` (10 or 16), uppercase digits if `upper`. */
 static void print_uint(uint32_t n, unsigned base, int upper)
 {
     char buf[32];
@@ -30,6 +35,7 @@ static void print_uint(uint32_t n, unsigned base, int upper)
         tty_putchar(buf[i]);
 }
 
+/* Writes a signed integer; -(n + 1) + 1 avoids overflow on INT32_MIN. */
 static void print_int(int32_t n)
 {
     uint32_t un;
@@ -80,6 +86,7 @@ void printk(const char *fmt, ...)
         }
         else
         {
+            /* Unknown format: print it as is. */
             tty_putchar('%');
             if (fmt[i])
                 tty_putchar(fmt[i]);

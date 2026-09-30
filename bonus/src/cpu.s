@@ -1,7 +1,15 @@
-; lgdt/lidt et stubs ISR/IRQ. Tables isr_stubs / irq_stubs pour idt.c.
+; CPU code that can't be written in C:
+; - gdt_flush / idt_flush: load the tables (lgdt / lidt);
+; - one stub per exception (isr0-31) and per IRQ (irq0-15), which pushes an
+;   error code (0 if the CPU doesn't provide one) and the vector number, then
+;   jumps to a common path that saves the registers and calls into C.
+; Tables isr_stubs / irq_stubs: stub addresses, read by idt.c.
 
 bits 32
 
+; void gdt_flush(uint32_t gdt_ptr)
+; After lgdt, the segment registers still hold the old values: reload them
+; with 0x10 (data), and reload cs (0x08, code) with a far jump.
 global gdt_flush
 gdt_flush:
     mov     eax, [esp + 4]
@@ -16,13 +24,14 @@ gdt_flush:
 .reload:
     ret
 
+; void idt_flush(uint32_t idt_ptr)
 global idt_flush
 idt_flush:
     mov     eax, [esp + 4]
     lidt    [eax]
     ret
 
-; 8, 10-14, 17 poussent deja un code d'erreur.
+; 8, 10-14 and 17 already push an error code.
 %macro ISR 1
 global isr%1
 isr%1:
@@ -71,6 +80,9 @@ irq_stubs:
 %assign i i+1
 %endrep
 
+; Common path: saves the registers and ds, switches to kernel segments, calls
+; the C handler with a pointer to the stack (struct registers), restores
+; everything, drops vector + error code (8 bytes) and returns with iret.
 %macro INT_STUB 1
     pusha
     xor     eax, eax

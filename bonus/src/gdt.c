@@ -1,8 +1,13 @@
-/* GDT plate : null, code 0x08, data 0x10. */
+/*
+** Flat GDT: null, code 0x08, data 0x10. Both segments cover all memory
+** (base 0, limit 4 GiB), so addressing is plain linear memory.
+** GRUB already provides a GDT, but we cannot know where it lives or keep
+** it: the kernel installs its own.
+*/
 
 #include "gdt.h"
 
-extern void gdt_flush(uint32_t ptr);
+extern void gdt_flush(uint32_t ptr);     /* cpu.s */
 
 static struct gdt_entry g_gdt[3];
 static struct gdt_ptr g_gp;
@@ -22,7 +27,10 @@ void gdt_init(void)
 {
     g_gp.limit = (uint16_t)(sizeof(g_gdt) - 1);
     g_gp.base = (uint32_t)&g_gdt;
-    gdt_set_gate(0, 0, 0, 0, 0);
+    gdt_set_gate(0, 0, 0, 0, 0);                    /* mandatory null descriptor */
+    /* access 0x9A: present, ring 0, executable and readable code.
+    ** access 0x92: present, ring 0, readable and writable data.
+    ** gran 0xCF: limit counted in 4 KiB pages, 32-bit segment. */
     gdt_set_gate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF);
     gdt_set_gate(2, 0, 0xFFFFFFFF, 0x92, 0xCF);
     gdt_flush((uint32_t)&g_gp);

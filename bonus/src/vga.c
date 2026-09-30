@@ -1,4 +1,7 @@
-/* Cellules VGA et curseur materiel (CRT 0x3D4/0x3D5). */
+/*
+** VGA cells and hardware cursor. The CRT controller is used in two steps:
+** register number on port 0x3D4, then the value on 0x3D5.
+*/
 
 #include "vga.h"
 #include "io.h"
@@ -18,6 +21,7 @@ uint16_t *vga_buffer(void)
     return ((uint16_t *)VGA_MEMORY);
 }
 
+/* Registers 0x0A/0x0B: cursor start/end scanlines within the cell. */
 void vga_cursor_enable(void)
 {
     outb(0x3D4, 0x0A);
@@ -26,6 +30,7 @@ void vga_cursor_enable(void)
     outb(0x3D5, (inb(0x3D5) & 0xE0) | 15);
 }
 
+/* Registers 0x0F/0x0E: low/high byte of the linear position. */
 void vga_cursor_move(size_t row, size_t col)
 {
     uint16_t pos;

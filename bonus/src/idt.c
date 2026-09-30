@@ -1,4 +1,7 @@
-/* IDT : 32 exceptions + 16 IRQ, stubs ASM dans cpu.s. */
+/*
+** IDT: 32 exceptions + 16 IRQs, ASM stubs in cpu.s. The other vectors
+** stay empty (not present).
+*/
 
 #include "idt.h"
 #include "pic.h"
@@ -6,6 +9,7 @@
 #include "printk.h"
 #include "tty.h"
 
+/* Defined in cpu.s. */
 extern void idt_flush(uint32_t ptr);
 extern void (*isr_stubs[ISR_COUNT])(void);
 extern void (*irq_stubs[IRQ_COUNT])(void);
@@ -13,6 +17,7 @@ extern void (*irq_stubs[IRQ_COUNT])(void);
 static struct idt_entry g_idt[IDT_SIZE];
 static struct idt_ptr g_ip;
 
+/* Points vector `num` at `handler`. */
 static void idt_set_gate(uint8_t num, void (*handler)(void))
 {
     uint32_t base;
