@@ -1,4 +1,8 @@
-/* Custom kernel linker script — i386, load at 1 MiB. */
+/*
+** Kernel linker script (i386), loaded at 1 MiB: BIOS and VGA memory sit
+** below that. The multiboot header goes at the very start of .text so GRUB
+** finds it. Sections are aligned on 4 KiB (pages).
+*/
 ENTRY(_start)
 
 SECTIONS

@@ -1,3 +1,5 @@
+/* Basic libc functions, rewritten for the kernel. */
+
 #include "klib.h"
 
 size_t  strlen(const char *s)
@@ -65,6 +67,7 @@ void    *memmove(void *dst, const void *src, size_t n)
         return (dst);
     if (d < s)
         return (memcpy(dst, src, n));
+    /* dst after src: copy backwards so the source is not overwritten. */
     d += n;
     s += n;
     while (n--)
