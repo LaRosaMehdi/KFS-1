@@ -1,3 +1,8 @@
+/*
+** Fixed-size integer types without libc: built on the macros predefined
+** by gcc (__UINT8_TYPE__...), available with -ffreestanding.
+*/
+
 #ifndef TYPES_H
 # define TYPES_H
 
