@@ -65,7 +65,7 @@ Bonus (`bonus/`, replaces or extends the files above):
 | `src/pic.c` | 8259 PIC: IRQs remapped to 32-47, only the keyboard gets through |
 | `src/keyboard.c` | PS/2 scancodes → characters, Shift, F1-F4, arrows, PageUp/PageDown |
 | `src/tty.c` | 4 consoles, tab bar, scrolling + history, cursor movement, protected lines |
-| `src/printk.c` | `printk`: `%c %s %d %i %u %x %X %p %%` |
+| `src/printk.c` | `printk`: `%c %s %d %i %u %x %X %p %%`, zero-padded width (`%08x`), `print_k_stack` |
 | `src/vga.c` | VGA cells and hardware cursor |
 | `include/` | Prototypes, GDT/IDT structures, bonus `vga.h` |
 
