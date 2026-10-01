@@ -32,8 +32,12 @@ static void idt_set_gate(uint8_t num, void (*handler)(void))
 
 void isr_handler(struct registers *regs)
 {
+    /* Stack first: the dump can fill the screen, and the cause must stay
+    ** visible once the CPU is halted. */
+    printk("\n");
+    print_k_stack();
     tty_set_color(VGA_COLOR_WHITE, VGA_COLOR_RED);
-    printk("\nexception %u err=0x%x eip=0x%x\n",
+    printk("KERNEL PANIC: exception %u err=0x%x eip=0x%x\n",
         regs->int_no, regs->err_code, regs->eip);
     while (1)
         __asm__ volatile ("cli; hlt");

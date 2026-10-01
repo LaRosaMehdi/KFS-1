@@ -56,7 +56,8 @@ struct registers
 
 /* Fills in the 32 exceptions and 16 IRQs, then loads the table (lidt). */
 void idt_init(void);
-/* Called by cpu.s on an exception: prints the cause and halts the CPU. */
+/* Called by cpu.s on an exception: dumps the kernel stack, prints the cause
+** and halts the CPU. */
 void isr_handler(struct registers *regs);
 /* Called by cpu.s on an IRQ: handles it, then acknowledges the PIC. */
 void irq_handler(struct registers *regs);
