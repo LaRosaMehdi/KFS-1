@@ -3,7 +3,8 @@
 
 /*
 ** printk: simplified printf to the active console.
-** Formats: %c %s %d %i %u %x %X %p %%, no width or precision.
+** Formats: %c %s %d %i %u %x %X %p %%. A width zero-pads %u %x %X %p
+** (%08x); no other width or precision.
 */
 void printk(const char *fmt, ...);
 
