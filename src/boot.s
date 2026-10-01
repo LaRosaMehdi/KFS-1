@@ -18,6 +18,7 @@ align 4
 
 section .bss
 align 16
+global stack_top                ; read by print_k_stack
 stack_bottom:
     resb 16384                  ; 16 KiB stack, grows downwards
 stack_top:

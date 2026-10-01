@@ -7,4 +7,8 @@
 */
 void printk(const char *fmt, ...);
 
+/* Dumps the kernel stack to the active console, from the current stack
+** pointer up to the top of the stack, four 32-bit words per line. */
+void print_k_stack(void);
+
 #endif

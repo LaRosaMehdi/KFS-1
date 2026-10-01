@@ -96,3 +96,47 @@ void printk(const char *fmt, ...)
     }
     __builtin_va_end(ap);
 }
+
+/* Writes `value` as exactly 8 hex digits, so dump columns line up. */
+static void print_hex_word(uint32_t value)
+{
+    int shift;
+
+    shift = 28;
+    while (shift >= 0)
+    {
+        tty_putchar("0123456789abcdef"[(value >> shift) & 0xF]);
+        shift -= 4;
+    }
+}
+
+extern uint32_t stack_top[];            /* boot.s */
+
+void print_k_stack(void)
+{
+    uint32_t *stack_pointer;
+    uint32_t *word;
+    size_t words_on_line;
+
+    __asm__ volatile ("mov %%esp, %0" : "=r"(stack_pointer));
+    printk("kernel stack: esp=%p top=%p (%u bytes used)\n", stack_pointer,
+        stack_top, (uint32_t)stack_top - (uint32_t)stack_pointer);
+    word = stack_pointer;
+    words_on_line = 0;
+    while (word < stack_top)
+    {
+        if (words_on_line == 0)
+        {
+            print_str("0x");
+            print_hex_word((uint32_t)word);
+            tty_putchar(':');
+        }
+        tty_putchar(' ');
+        print_hex_word(*word++);
+        if (++words_on_line == 4 || word == stack_top)
+        {
+            tty_putchar('\n');
+            words_on_line = 0;
+        }
+    }
+}
