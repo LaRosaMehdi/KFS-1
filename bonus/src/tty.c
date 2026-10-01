@@ -163,6 +163,11 @@ void tty_switch(size_t index)
     tty_sync();
 }
 
+size_t tty_current(void)
+{
+    return (g_current);
+}
+
 void tty_lock_lines(void)
 {
     struct tty *t;
@@ -195,6 +200,22 @@ void tty_backspace(void)
     else
         t->col--;
     t->buffer[t->row * VGA_WIDTH + t->col] = vga_entry(' ', t->color);
+}
+
+void tty_clear(void)
+{
+    struct tty *t;
+    size_t cell;
+
+    t = &g_ttys[g_current];
+    cell = t->top * VGA_WIDTH;
+    while (cell < VGA_SIZE)
+        t->buffer[cell++] = vga_entry(' ', t->color);
+    t->row = t->top;
+    t->col = 0;
+    t->history_rows = 0;
+    t->scroll_back = 0;
+    tty_sync();
 }
 
 void tty_putchar(char c)

@@ -16,6 +16,8 @@
 void tty_init(void);
 /* Makes console `index` (0 to TTY_COUNT - 1) active and redraws it. */
 void tty_switch(size_t index);
+/* Index of the active console. */
+size_t tty_current(void);
 /* Color of the next characters written. */
 void tty_set_color(uint8_t fg, uint8_t bg);
 /* Writes `c`; handles '\n', '\r', '\t' (every 4) and '\b'. Scrolls at the bottom. */
@@ -25,6 +27,8 @@ void tty_write(const char *s);
 /* Erases the character before the cursor, never going back into lines
 ** protected by tty_lock_lines. */
 void tty_backspace(void);
+/* Erases everything below the protected lines, history included. */
+void tty_clear(void);
 /* Protects the lines written so far: they can't be erased or scrolled away. */
 void tty_lock_lines(void);
 /* Moves the cursor by `row_delta` rows and `col_delta` columns, staying
