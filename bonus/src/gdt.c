@@ -8,6 +8,7 @@
 */
 
 #include "gdt.h"
+#include "printk.h"
 
 extern void gdt_flush(uint32_t ptr);     /* cpu.s */
 
@@ -41,4 +42,30 @@ void gdt_init(void)
     gdt_set_gate(5, 0, 0xFFFFFFFF, 0xF2, 0xCF);     /* user data */
     gdt_set_gate(6, 0, 0xFFFFFFFF, 0xF2, 0xCF);     /* user stack */
     gdt_flush((uint32_t)&g_gp);
+}
+
+void gdt_print(void)
+{
+    static const char *const segment_names[GDT_ENTRY_COUNT] = {
+        "null        ", "kernel code ", "kernel data ", "kernel stack",
+        "user code   ", "user data   ", "user stack  "
+    };
+    const struct gdt_entry *entry;
+    size_t entry_index;
+    uint32_t selector;
+
+    printk("GDT at %p, %u entries\n", GDT_ADDRESS, GDT_ENTRY_COUNT);
+    entry_index = 0;
+    while (entry_index < GDT_ENTRY_COUNT)
+    {
+        entry = &g_gdt[entry_index];
+        selector = entry_index * sizeof(struct gdt_entry);
+        printk("0x%x%x %s base=%p limit=0x%x access=0x%x flags=0x%x\n",
+            selector >> 4, selector & 0xF, segment_names[entry_index],
+            entry->base_low | (uint32_t)entry->base_mid << 16
+            | (uint32_t)entry->base_high << 24,
+            entry->limit_low | (uint32_t)(entry->granularity & 0x0F) << 16,
+            entry->access, entry->granularity >> 4);
+        entry_index++;
+    }
 }

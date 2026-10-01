@@ -32,5 +32,7 @@ struct gdt_ptr
 
 /* Builds the flat GDT at GDT_ADDRESS and reloads the segment registers. */
 void gdt_init(void);
+/* Prints every entry as read back from GDT_ADDRESS. */
+void gdt_print(void);
 
 #endif
