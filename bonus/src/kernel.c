@@ -1,7 +1,7 @@
 /*
 ** Bonus C entry point, called by _start (src/boot.s).
-** Sets up GDT/IDT/PIC/TTY/keyboard, then the 4 consoles, then waits for keys:
-** everything else happens in keyboard interrupts.
+** Sets up GDT/IDT/PIC/TTY/keyboard, then the 4 consoles and their shell
+** prompt, then waits for keys: everything else happens in keyboard interrupts.
 */
 
 #include "types.h"
@@ -11,8 +11,10 @@
 #include "keyboard.h"
 #include "tty.h"
 #include "printk.h"
+#include "shell.h"
 
-/* Writes the protected header of console `n` (plus "42" on the first one). */
+/* Writes the protected header of console `n` (plus "42" on the first one),
+** then the shell prompt. */
 static void setup_tty(size_t n)
 {
     tty_switch(n);
@@ -25,6 +27,7 @@ static void setup_tty(size_t n)
     }
     tty_set_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
     tty_lock_lines();
+    shell_prompt();
 }
 
 void main(uint32_t magic, void *mb_info)

@@ -6,8 +6,8 @@ GRUB loads the binary, the ASM code provides the Multiboot header and calls
 
 No host libc is linked. Virtual image: `kfs.iso` (well under 10 MB).
 
-The bonus adds scrolling, a cursor, colors, `printk`, keyboard input and 4
-screens (F1-F4). `bonus/` only holds added or replaced files: a file in
+The bonus adds scrolling, a cursor, colors, `printk`, keyboard input, 4
+screens (F1-F4) and a small shell. `bonus/` only holds added or replaced files: a file in
 `bonus/src/` replaces the one with the same name in `src/`, and
 `bonus/include/` is searched before `include/`. Everything else (boot, linker
 script, klib, GRUB) is shared.
@@ -60,12 +60,13 @@ Bonus (`bonus/`, replaces or extends the files above):
 |---|---|
 | `src/kernel.c` | `main`: init GDT, IDT, PIC, consoles, keyboard, then `sti` |
 | `src/gdt.c` | Flat GDT at `0x00000800`: kernel code/data/stack (`0x08`/`0x10`/`0x18`), user code/data/stack (`0x20`/`0x28`/`0x30`) |
-| `src/idt.c` | IDT: 32 exceptions (red message + halt), 16 IRQs |
+| `src/idt.c` | IDT: 32 exceptions (stack dump + red panic message + halt), 16 IRQs |
 | `src/cpu.s` | `lgdt`/`lidt`, interrupt stubs that call into C |
 | `src/pic.c` | 8259 PIC: IRQs remapped to 32-47, only the keyboard gets through |
-| `src/keyboard.c` | PS/2 scancodes → characters, Shift, F1-F4, arrows, PageUp/PageDown |
-| `src/tty.c` | 4 consoles, tab bar, scrolling + history, cursor movement, protected lines |
-| `src/printk.c` | `printk`: `%c %s %d %i %u %x %X %p %%` |
+| `src/keyboard.c` | PS/2 scancodes → characters, Shift, F1-F4, left/right arrows, PageUp/PageDown |
+| `src/shell.c` | Shell: one editable input line per console, 7 commands |
+| `src/tty.c` | 4 consoles, tab bar, scrolling + history, cursor movement, clear, protected lines |
+| `src/printk.c` | `printk`: `%c %s %d %i %u %x %X %p %%`, `print_k_stack` |
 | `src/vga.c` | VGA cells and hardware cursor |
 | `include/` | Prototypes, GDT/IDT structures, bonus `vga.h` |
 
@@ -86,13 +87,26 @@ Each console's header is protected (`tty_lock_lines`): neither backspace nor
 scrolling can erase it.
 Rows that scroll off the top go to a 100-row history per console:
 PageUp/PageDown scroll the view through it, and typing jumps back to the live
-screen. The arrow keys move the cursor inside the editable area, and the next
-characters are written there.
+screen.
 
 **Keyboard (bonus)**: a key press raises IRQ1 → the PIC sends vector 33 → the
 `irq1` stub (`cpu.s`) saves the registers → `irq_handler` → `keyboard_handler`
-reads the scancode from port `0x60`, then writes the character or switches
-console (F1-F4) → the PIC is acknowledged (`pic_eoi`).
+reads the scancode from port `0x60`, then passes the character to the shell
+or switches console (F1-F4) → the PIC is acknowledged (`pic_eoi`).
+
+**Shell (bonus)**: every console shows a `kfs> ` prompt and keeps its own
+input line, run on Enter. The left/right arrows move inside the line;
+characters are inserted and backspace deletes at the cursor.
+
+| Command | Effect |
+|---|---|
+| `help` | Lists the commands |
+| `stack` | Dumps the kernel stack (`print_k_stack`) |
+| `gdt` | Prints the 7 GDT entries read back from `0x00000800` |
+| `clear` | Clears the console below its header, history included |
+| `halt` | Stops the CPU (`cli; hlt`) |
+| `reboot` | Resets the machine through the PS/2 controller |
+| `panic` | Raises an invalid-opcode exception: stack dump, red panic message, halt |
 
 ## Flags (subject III.2.2)
 

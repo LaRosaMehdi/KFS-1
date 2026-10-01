@@ -8,8 +8,8 @@
 
 /* Drains the controller buffer to start from a clean state. */
 void keyboard_init(void);
-/* Called on IRQ1: reads a scancode, handles Shift and F1-F4, sends the
-** character to the active console. */
+/* Called on IRQ1: reads a scancode, handles Shift, F1-F4 and PageUp/Down,
+** sends characters and left/right arrows to the shell. */
 void keyboard_handler(void);
 
 #endif
