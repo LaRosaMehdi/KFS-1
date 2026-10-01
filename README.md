@@ -59,7 +59,7 @@ Bonus (`bonus/`, replaces or extends the files above):
 | File | Role |
 |---|---|
 | `src/kernel.c` | `main`: init GDT, IDT, PIC, consoles, keyboard, then `sti` |
-| `src/gdt.c` | Flat GDT: code segment `0x08`, data `0x10` |
+| `src/gdt.c` | Flat GDT at `0x00000800`: kernel code/data/stack (`0x08`/`0x10`/`0x18`), user code/data/stack (`0x20`/`0x28`/`0x30`) |
 | `src/idt.c` | IDT: 32 exceptions (red message + halt), 16 IRQs |
 | `src/cpu.s` | `lgdt`/`lidt`, interrupt stubs that call into C |
 | `src/pic.c` | 8259 PIC: IRQs remapped to 32-47, only the keyboard gets through |
