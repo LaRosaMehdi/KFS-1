@@ -60,8 +60,8 @@ void gdt_print(void)
     {
         entry = &g_gdt[entry_index];
         selector = entry_index * sizeof(struct gdt_entry);
-        printk("0x%x%x %s base=%p limit=0x%x access=0x%x flags=0x%x\n",
-            selector >> 4, selector & 0xF, segment_names[entry_index],
+        printk("0x%02x %s base=%08p limit=0x%05x access=0x%02x flags=0x%x\n",
+            selector, segment_names[entry_index],
             entry->base_low | (uint32_t)entry->base_mid << 16
             | (uint32_t)entry->base_high << 24,
             entry->limit_low | (uint32_t)(entry->granularity & 0x0F) << 16,
