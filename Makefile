@@ -35,7 +35,7 @@ SRCS	:= $(wildcard bonus/src/*.c bonus/src/*.s) \
 endif
 OBJS	= $(addprefix $(BUILD)/,$(addsuffix .o,$(basename $(SRCS))))
 
-.PHONY: all bonus iso run run-bonus clean fclean re
+.PHONY: all bonus iso run run-bonus test clean fclean re
 
 all: $(NAME)
 
@@ -62,6 +62,9 @@ iso: $(NAME)
 
 run: iso
 	qemu-system-i386 -boot d -cdrom $(ISO)
+
+test: iso
+	python3 scripts/check_boot.py --bin $(NAME) --iso $(ISO)
 
 clean:
 	rm -rf build

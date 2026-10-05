@@ -1,3 +1,6 @@
 build/
 *.bin
 *.iso
+*.o
+*.ppm
+.DS_Store
