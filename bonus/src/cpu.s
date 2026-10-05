@@ -9,7 +9,8 @@ bits 32
 
 ; void gdt_flush(uint32_t gdt_ptr)
 ; After lgdt, the segment registers still hold the old values: reload them
-; with 0x10 (data), and reload cs (0x08, code) with a far jump.
+; with 0x10 (data) and 0x18 (stack), and reload cs (0x08, code) with a far
+; jump.
 global gdt_flush
 gdt_flush:
     mov     eax, [esp + 4]
@@ -19,6 +20,7 @@ gdt_flush:
     mov     es, ax
     mov     fs, ax
     mov     gs, ax
+    mov     ax, 0x18
     mov     ss, ax
     jmp     0x08:.reload
 .reload:

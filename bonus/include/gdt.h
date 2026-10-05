@@ -8,6 +8,10 @@
 ** protected mode. Layouts are fixed by the hardware, hence `packed`.
 */
 
+/* The table lives at a fixed physical address, in free low memory. */
+# define GDT_ADDRESS 0x00000800
+# define GDT_ENTRY_COUNT 7
+
 /* One 8-byte segment descriptor (base and limit are split up). */
 struct gdt_entry
 {
@@ -26,7 +30,7 @@ struct gdt_ptr
     uint32_t base;
 } __attribute__((packed));
 
-/* Loads a flat GDT (code and data over all 4 GiB) and reloads the segments. */
+/* Builds the flat GDT at GDT_ADDRESS and reloads the segment registers. */
 void gdt_init(void);
 
 #endif

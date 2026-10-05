@@ -59,13 +59,13 @@ Bonus (`bonus/`, replaces or extends the files above):
 | File | Role |
 |---|---|
 | `src/kernel.c` | `main`: init GDT, IDT, PIC, consoles, keyboard, then `sti` |
-| `src/gdt.c` | Flat GDT: code segment `0x08`, data `0x10` |
+| `src/gdt.c` | Flat GDT at `0x00000800`: kernel code/data/stack (`0x08`/`0x10`/`0x18`), user code/data/stack (`0x20`/`0x28`/`0x30`) |
 | `src/idt.c` | IDT: 32 exceptions (red message + halt), 16 IRQs |
 | `src/cpu.s` | `lgdt`/`lidt`, interrupt stubs that call into C |
 | `src/pic.c` | 8259 PIC: IRQs remapped to 32-47, only the keyboard gets through |
 | `src/keyboard.c` | PS/2 scancodes → characters, Shift, F1-F4, arrows, PageUp/PageDown |
 | `src/tty.c` | 4 consoles, tab bar, scrolling + history, cursor movement, protected lines |
-| `src/printk.c` | `printk`: `%c %s %d %i %u %x %X %p %%` |
+| `src/printk.c` | `printk`: `%c %s %d %i %u %x %X %p %%`, zero-padded width (`%08x`), `print_k_stack` |
 | `src/vga.c` | VGA cells and hardware cursor |
 | `include/` | Prototypes, GDT/IDT structures, bonus `vga.h` |
 

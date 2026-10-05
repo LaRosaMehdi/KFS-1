@@ -1,6 +1,8 @@
 /*
-** Flat GDT: null, code 0x08, data 0x10. Both segments cover all memory
-** (base 0, limit 4 GiB), so addressing is plain linear memory.
+** Flat GDT stored at physical address 0x00000800: null, then code, data and
+** stack for the kernel (0x08, 0x10, 0x18) and for user mode (0x20, 0x28,
+** 0x30). Every segment covers all memory (base 0, limit 4 GiB), so
+** addressing is plain linear memory; only the privilege level differs.
 ** GRUB already provides a GDT, but we cannot know where it lives or keep
 ** it: the kernel installs its own.
 */
@@ -9,7 +11,7 @@
 
 extern void gdt_flush(uint32_t ptr);     /* cpu.s */
 
-static struct gdt_entry g_gdt[3];
+static struct gdt_entry *const g_gdt = (struct gdt_entry *)GDT_ADDRESS;
 static struct gdt_ptr g_gp;
 
 static void gdt_set_gate(int num, uint32_t base, uint32_t limit,
@@ -25,13 +27,18 @@ static void gdt_set_gate(int num, uint32_t base, uint32_t limit,
 
 void gdt_init(void)
 {
-    g_gp.limit = (uint16_t)(sizeof(g_gdt) - 1);
-    g_gp.base = (uint32_t)&g_gdt;
+    g_gp.limit = (uint16_t)(GDT_ENTRY_COUNT * sizeof(struct gdt_entry) - 1);
+    g_gp.base = GDT_ADDRESS;
     gdt_set_gate(0, 0, 0, 0, 0);                    /* mandatory null descriptor */
-    /* access 0x9A: present, ring 0, executable and readable code.
-    ** access 0x92: present, ring 0, readable and writable data.
+    /* access 0x9A / 0xFA: present, ring 0 / 3, executable and readable code.
+    ** access 0x92 / 0xF2: present, ring 0 / 3, readable and writable data
+    ** (stacks are plain data segments).
     ** gran 0xCF: limit counted in 4 KiB pages, 32-bit segment. */
-    gdt_set_gate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF);
-    gdt_set_gate(2, 0, 0xFFFFFFFF, 0x92, 0xCF);
+    gdt_set_gate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF);     /* kernel code */
+    gdt_set_gate(2, 0, 0xFFFFFFFF, 0x92, 0xCF);     /* kernel data */
+    gdt_set_gate(3, 0, 0xFFFFFFFF, 0x92, 0xCF);     /* kernel stack */
+    gdt_set_gate(4, 0, 0xFFFFFFFF, 0xFA, 0xCF);     /* user code */
+    gdt_set_gate(5, 0, 0xFFFFFFFF, 0xF2, 0xCF);     /* user data */
+    gdt_set_gate(6, 0, 0xFFFFFFFF, 0xF2, 0xCF);     /* user stack */
     gdt_flush((uint32_t)&g_gp);
 }
