@@ -13,13 +13,29 @@ LDFLAGS	= -m elf_i386 -nostdlib -T linker.ld
 GRUBFLAGS	= --compress=xz --fonts= --locales= --themes= \
 	--install-modules="multiboot biosdisk iso9660 normal configfile reboot halt"
 
+# Local GRUB i386-pc modules (no sudo). Populated by `make deps`.
+LOCAL_GRUB	= .deps/grub/i386-pc
+GRUB_PC_VER	:= $(shell apt-cache show grub-pc-bin 2>/dev/null | awk '/^Version:/{print $$2; exit}')
+ifeq ($(GRUB_PC_VER),)
+GRUB_PC_VER	= 2.06-2ubuntu7.2
+endif
+GRUB_PC_DEB_URL	?= http://archive.ubuntu.com/ubuntu/pool/main/g/grub2/grub-pc-bin_$(GRUB_PC_VER)_amd64.deb
+
 ifeq ($(shell uname), Darwin)
 CC	= i686-elf-gcc
 LD	= i686-elf-ld
 GRUB	= i686-elf-grub-mkrescue
 else
 CFLAGS	+= -m32
-GRUBFLAGS	+= -d $(dir $(shell find /usr/lib64/grub /usr/lib/grub -name boot_hybrid.img 2>/dev/null | head -1))
+SYSTEM_GRUB_IMG	:= $(shell find /usr/lib64/grub /usr/lib/grub -name boot_hybrid.img 2>/dev/null | head -1)
+ifneq ($(SYSTEM_GRUB_IMG),)
+GRUB_DIR	:= $(dir $(SYSTEM_GRUB_IMG))
+else ifneq ($(wildcard $(LOCAL_GRUB)/boot_hybrid.img),)
+GRUB_DIR	:= $(LOCAL_GRUB)
+endif
+ifneq ($(GRUB_DIR),)
+GRUBFLAGS	+= -d $(GRUB_DIR)
+endif
 endif
 
 # bonus/ only holds files added or overridden on top of src/ and include/.
@@ -35,7 +51,7 @@ SRCS	:= $(wildcard bonus/src/*.c bonus/src/*.s) \
 endif
 OBJS	= $(addprefix $(BUILD)/,$(addsuffix .o,$(basename $(SRCS))))
 
-.PHONY: all bonus iso run run-bonus test clean fclean re
+.PHONY: all bonus iso run run-bonus test deps clean fclean re
 
 all: $(NAME)
 
@@ -56,9 +72,33 @@ $(BUILD)/%.o: %.s
 	@mkdir -p $(dir $@)
 	$(AS) $(ASFLAGS) $< -o $@
 
+# Download grub-pc-bin modules into .deps/ (no root required).
+deps:
+	@command -v curl >/dev/null || { echo "curl requis pour make deps"; exit 1; }
+	@command -v dpkg-deb >/dev/null || { echo "dpkg-deb requis pour make deps"; exit 1; }
+	mkdir -p .deps
+	curl -fsSL -o .deps/grub-pc-bin.deb "$(GRUB_PC_DEB_URL)"
+	rm -rf .deps/grub .deps/extract
+	mkdir -p .deps/extract .deps/grub
+	dpkg-deb -x .deps/grub-pc-bin.deb .deps/extract
+	cp -a .deps/extract/usr/lib/grub/i386-pc .deps/grub/
+	rm -rf .deps/extract .deps/grub-pc-bin.deb
+	test -f $(LOCAL_GRUB)/boot_hybrid.img
+	@echo "ok: modules GRUB dans $(LOCAL_GRUB)"
+
 iso: $(NAME)
+ifeq ($(shell uname), Linux)
+ifeq ($(GRUB_DIR),)
+	$(MAKE) deps
+	$(MAKE) iso
+else
 	cp $(NAME) iso/boot/kfs.bin
 	$(GRUB) $(GRUBFLAGS) -o $(ISO) iso
+endif
+else
+	cp $(NAME) iso/boot/kfs.bin
+	$(GRUB) $(GRUBFLAGS) -o $(ISO) iso
+endif
 
 run: iso
 	qemu-system-i386 -boot d -cdrom $(ISO)
