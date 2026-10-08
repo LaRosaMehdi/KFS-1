@@ -74,8 +74,8 @@ $(BUILD)/%.o: %.s
 
 # Download grub-pc-bin modules into .deps/ (no root required).
 deps:
-	@command -v curl >/dev/null || { echo "curl requis pour make deps"; exit 1; }
-	@command -v dpkg-deb >/dev/null || { echo "dpkg-deb requis pour make deps"; exit 1; }
+	@command -v curl >/dev/null || { echo "curl is required for make deps"; exit 1; }
+	@command -v dpkg-deb >/dev/null || { echo "dpkg-deb is required for make deps"; exit 1; }
 	mkdir -p .deps
 	curl -fsSL -o .deps/grub-pc-bin.deb "$(GRUB_PC_DEB_URL)"
 	rm -rf .deps/grub .deps/extract
@@ -84,7 +84,7 @@ deps:
 	cp -a .deps/extract/usr/lib/grub/i386-pc .deps/grub/
 	rm -rf .deps/extract .deps/grub-pc-bin.deb
 	test -f $(LOCAL_GRUB)/boot_hybrid.img
-	@echo "ok: modules GRUB dans $(LOCAL_GRUB)"
+	@echo "ok: GRUB modules in $(LOCAL_GRUB)"
 
 iso: $(NAME)
 ifeq ($(shell uname), Linux)
